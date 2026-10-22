@@ -37,4 +37,10 @@ jobs:
       - run: autoreconf -i
       - run: ./configure --enable-warning-as-error
       - run: make all dist check
-
+      - name: Upload Windows daemon executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapraidd-windows-x64
+          path: snapraidd.exe
+          if-no-files-found: error
+          retention-days: 7
