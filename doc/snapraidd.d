@@ -392,6 +392,12 @@ Configuration
 	transparently by the daemon when reconstructing array history, and are
 	purged by sys_log_retention_days regardless of format.
 
+    sys_startup_probe_delay_seconds
+	Delays the initial disk probe after daemon startup by the specified
+	number of seconds. The API and web interface remain available during
+	the delay. Set to 0 to probe immediately. The maximum is 86400 seconds
+	(24 hours). This option requires a daemon restart to apply.
+
     sys_shutdown_on
 	A comma-separated list of events that trigger an automatic system shutdown.
 

@@ -49,6 +49,12 @@ sys_log_retention_days = 120
 # Default is empty (disabled).
 #sys_log_compression =
 
+# Delay the initial probe after daemon startup to allow storage mounts to become
+# available. The API and web interface remain available during this delay.
+# The value is in seconds, from 0 (no delay) to 86400 (24 hours).
+# This option requires a daemon restart to apply.
+#sys_startup_probe_delay_seconds = 180
+
 # Comma-separated list of events that trigger an automatic system shutdown.
 # Supported events:
 #   - maintenance: shuts down the host after an automated, scheduled

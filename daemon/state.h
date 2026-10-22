@@ -354,6 +354,7 @@ struct snapraid_task {
 	int running; /**< If the command is running or finished */
 	int state; /**< one of PROCESS_STATE_* */
 	int64_t unix_queue_time; /**< Unix time of when the task was queued */
+	uint64_t not_before_tick_ms; /**< Earliest monotonic time the task may start */
 	int64_t unix_start_time; /**< Unix time of when the task was started */
 	int64_t unix_end_time; /**< Unix time of when the task terminated */
 	unsigned progress; /**< Completion percentage, 0 <= progress <= 100 */
@@ -598,6 +599,7 @@ struct snapraid_config {
 	char sys_log_directory[PATH_MAX]; /**< Directory for log files */
 	int sys_log_retention_days; /**< Number of days to keep logs */
 	int sys_log_compression; /**< 1 if log compression is enabled, 0 otherwise */
+	int sys_startup_probe_delay_seconds; /**< Delay before the initial probe */
 	char sys_shutdown_on[CONFIG_MAX]; /**< List of events to trigger shutdown */
 	int net_enabled; /**< 1 if network interface is enabled, 0 otherwise */
 	char net_port[CONFIG_MAX]; /**< Network port to bind to */
@@ -867,4 +869,3 @@ void web_wrlock(void);
 void web_unlock(void);
 
 #endif
-

@@ -413,7 +413,13 @@ Changing this option only affects newly created task logs. Existing logs
 transparently by the daemon when reconstructing array history, and are
 purged by sys_log_retention_days regardless of format.
 
----- 6.1.5 sys_shutdown_on ----
+---- 6.1.5 sys_startup_probe_delay_seconds ----
+Delays the initial disk probe after daemon startup by the specified
+number of seconds. The API and web interface remain available during
+the delay. Set to 0 to probe immediately. The maximum is 86400 seconds
+(24 hours). This option requires a daemon restart to apply.
+
+---- 6.1.6 sys_shutdown_on ----
 A comma-separated list of events that trigger an automatic system shutdown.
 
 Supported events are:
@@ -444,7 +450,7 @@ shutdown is not triggered. This allows you to start the machine and
 perform manual maintenance or recovery without triggering an
 immediate shutdown.
 
----- 6.1.6 sys_smartignore ----
+---- 6.1.7 sys_smartignore ----
 Allows you to ignore specific SMART attributes for one or more disks.
 Changes of ignored attributes are omitted from status reports and do not
 generate warning notifications. The attributes continue to be collected

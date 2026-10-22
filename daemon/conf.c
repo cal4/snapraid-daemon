@@ -511,6 +511,12 @@ int config_load_locked(struct snapraid_state* state)
 					++error_count;
 					log_msg(LVL_ERROR, "invalid config option %s=%s", key, val);
 				}
+			} else if (strcmp(key, "sys_startup_probe_delay_seconds") == 0) {
+				if (parse_int(val, 0, 86400, &config->sys_startup_probe_delay_seconds) == 0) {
+				} else {
+					++error_count;
+					log_msg(LVL_ERROR, "invalid config option %s=%s", key, val);
+				}
 			} else if (strcmp(key, "sys_shutdown_on") == 0) {
 				if (parse_shutdown_on(val, config->sys_shutdown_on, sizeof(config->sys_shutdown_on)) == 0) {
 				} else {
@@ -809,6 +815,8 @@ static const char* config_diff_sys(struct snapraid_config* a, struct snapraid_co
 		return "sys_log_retention_days";
 	if (a->sys_log_compression != b->sys_log_compression)
 		return "sys_log_compression";
+	if (a->sys_startup_probe_delay_seconds != b->sys_startup_probe_delay_seconds)
+		return "sys_startup_probe_delay_seconds";
 	if (!shutdown_on_equal(a->sys_shutdown_on, b->sys_shutdown_on))
 		return "sys_shutdown_on";
 	if (!smartignore_list_equal(&a->smartignore_list, &b->smartignore_list))
@@ -1251,6 +1259,7 @@ void config_default_locked(struct snapraid_state* state)
 	}
 	config->sys_log_retention_days = 0;
 	config->sys_log_compression = 0;
+	config->sys_startup_probe_delay_seconds = 0;
 	sncpy(config->sys_shutdown_on, sizeof(config->sys_shutdown_on), "");
 	config->net_enabled = 0;
 	sncpy(config->net_port, sizeof(config->net_port), "");
@@ -1309,6 +1318,7 @@ void config_dup_locked(struct snapraid_state* state, struct snapraid_config* tra
 	sncpy(transient->sys_log_directory, sizeof(transient->sys_log_directory), config->sys_log_directory);
 	transient->sys_log_retention_days = config->sys_log_retention_days;
 	transient->sys_log_compression = config->sys_log_compression;
+	transient->sys_startup_probe_delay_seconds = config->sys_startup_probe_delay_seconds;
 	sncpy(transient->sys_shutdown_on, sizeof(transient->sys_shutdown_on), config->sys_shutdown_on);
 	transient->net_enabled = config->net_enabled;
 	sncpy(transient->net_port, sizeof(transient->net_port), config->net_port);
@@ -1374,6 +1384,7 @@ void config_apply_locked(struct snapraid_state* state, struct snapraid_config* t
 	sncpy(config->sys_log_directory, sizeof(config->sys_log_directory), transient->sys_log_directory);
 	config->sys_log_retention_days = transient->sys_log_retention_days;
 	config->sys_log_compression = transient->sys_log_compression;
+	config->sys_startup_probe_delay_seconds = transient->sys_startup_probe_delay_seconds;
 	sncpy(config->sys_shutdown_on, sizeof(config->sys_shutdown_on), transient->sys_shutdown_on);
 	config->net_enabled = transient->net_enabled;
 	sncpy(config->net_port, sizeof(config->net_port), transient->net_port);
@@ -1478,4 +1489,3 @@ void config_done(struct snapraid_state* state)
 	tommy_list_foreach(&state->config.maintenance_list, run_free);
 	tommy_list_foreach(&state->config.smartignore_list, smartignore_free);
 }
-

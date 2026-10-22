@@ -1827,6 +1827,25 @@ static void* runner_thread(void* arg)
 
 			/* if the next task does not need hooks and a hook was postponed, close it first */
 			struct snapraid_task* next = tommy_list_head(&state->runner.waiting_list)->data;
+			uint64_t now_ms = os_tick_ms();
+			if (next->not_before_tick_ms > now_ms) {
+				uint64_t remaining_ms = next->not_before_tick_ms - now_ms;
+				uint64_t sleep_ms = remaining_ms < 1000 ? remaining_ms : 1000;
+
+				/*
+				 * Keep the delayed startup probe at the head of the queue, but
+				 * release the state lock while waiting so the API can stay responsive.
+				 */
+				state_unlock();
+				int sleep_ret = os_usleep(sleep_ms * 1000);
+				state_lock();
+				if (sleep_ret != 0 && daemon_is_running(state)) {
+					log_msg(LVL_ERROR, "failed while waiting to run the startup probe");
+					state->daemon_failing = 1;
+				}
+				continue;
+			}
+
 			if (!runner_need_hook(next->cmd) && state->runner.hook_flags != 0) {
 				runner_hook_postponed_locked_yield(state, 0);
 				continue;
@@ -2006,6 +2025,11 @@ void runner_step_locked(struct snapraid_state* state, const char* snapraid, int 
 	task->high_cmd = high_cmd;
 	task->unix_queue_time = now;
 	task->group = group;
+	if (high_cmd == CMD_STARTUP && cmd == CMD_PROBE && state->config.sys_startup_probe_delay_seconds > 0) {
+		task->not_before_tick_ms = os_tick_ms()
+			+ (uint64_t)state->config.sys_startup_probe_delay_seconds * 1000;
+		log_msg(LVL_INFO, "delaying the startup probe by %d seconds", state->config.sys_startup_probe_delay_seconds);
+	}
 
 	/* translate some commands */
 	int cmd_translate = cmd;
@@ -2158,6 +2182,7 @@ int runner_delete_old_log_locked_yield(struct snapraid_state* state, char* msg, 
 	return 0;
 }
 
+
 int runner_delete_old_history_locked(struct snapraid_state* state, char* msg, size_t msg_size, int* status)
 {
 	time_t now = time(0);
@@ -2278,4 +2303,3 @@ int runner_clear(struct snapraid_state* state, char* msg, size_t msg_size, int* 
 	*status = 200;
 	return 0;
 }
-
