@@ -34,14 +34,31 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: mingw-w64-x86_64-gcc autoconf automake make zip
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-zstd autoconf automake make zip
       - run: autoreconf -i
       - run: ./configure --enable-warning-as-error
       - run: make all dist check
+      - name: Package Windows executable and runtime DLLs
+        run: |
+          mkdir -p snapraidd-package
+          cp snapraidd.exe snapraidd-package/
+          ldd snapraidd.exe | tee snapraidd-dependencies.txt
+          if grep -qi 'not found' snapraidd-dependencies.txt; then
+            echo "::error::A snapraidd.exe runtime dependency could not be resolved."
+            exit 1
+          fi
+          mapfile -t runtime_dlls < <(awk '$2 == "=>" && $3 ~ /^\/mingw64\/bin\// { print $3 }' snapraidd-dependencies.txt | sort -u)
+          for dll in "${runtime_dlls[@]}"; do
+            cp "$dll" snapraidd-package/
+          done
+          if ! compgen -G 'snapraidd-package/*zstd*.dll' > /dev/null; then
+            echo "::error::The zstd runtime DLL was not included in the package."
+            exit 1
+          fi
       - name: Upload Windows daemon executable
         uses: actions/upload-artifact@v4
         with:
           name: snapraidd-windows-x64
-          path: snapraidd.exe
+          path: snapraidd-package/
           if-no-files-found: error
           retention-days: 7
